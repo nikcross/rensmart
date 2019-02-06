@@ -56,7 +56,7 @@ public class GFSForecast extends SystemAPI {
 	}
 
 	public String getVersion() {
-		return "3.2.0 build 0004 Alpha";
+		return VERSION;
 	}
 
 	public void downloadForecast(String downloadPageName, String queueName, int cycleRuntime, String table) throws Exception {
@@ -115,11 +115,11 @@ public class GFSForecast extends SystemAPI {
 		String monthString = StringHelper.padLeftToFitSize("" + month, '0', 2);
 		String dateStamp = year + monthString + dateString + cycleTimeString;
 		GFSGrid grid = new GFSGrid(61.0D, 49.5D, -12.0D, 2.0D);
-		URL remoteUrl = this.createRemoteURLFromTemplate("http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=", cycleTimeString, hourString, dateStamp);
+		URL remoteUrl = this.createRemoteURLFromTemplate("https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_10_m_above_ground=on&var_UGRD=on&var_VGRD=on&dir=", cycleTimeString, hourString, dateStamp);
 		URL windURL = this.download(remoteUrl, downloadPageName, "wind-data-" + cycleRuntime + "-" + hour + "-.gfs", queueName);
-		remoteUrl = this.createRemoteURLFromTemplate("http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_surface=on&var_DSWRF=on&dir=", cycleTimeString, hourString, dateStamp);
+		remoteUrl = this.createRemoteURLFromTemplate("https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_surface=on&var_DSWRF=on&dir=", cycleTimeString, hourString, dateStamp);
 		URL solarURL = this.download(remoteUrl, downloadPageName, "solar-data-" + cycleRuntime + "-" + hour + "-.gfs", queueName);
-		remoteUrl = this.createRemoteURLFromTemplate("http://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_2_m_above_ground=on&var_RH=on&var_TMAX=on&var_TMIN=on&var_TMP=on&dir=", cycleTimeString, hourString, dateStamp);
+		remoteUrl = this.createRemoteURLFromTemplate("https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.tCYCLE_RUN_TIMEz.pgrb2.0p25.fHOUR&lev_2_m_above_ground=on&var_RH=on&var_TMAX=on&var_TMIN=on&var_TMP=on&dir=", cycleTimeString, hourString, dateStamp);
 		URL temperatureURL = this.download(remoteUrl, downloadPageName, "temperature-data-" + cycleRuntime + "-" + hour + "-.gfs", queueName);
 		this.processForecast(queueName, grid, windURL.toExternalForm(), solarURL.toExternalForm(), temperatureURL.toExternalForm());
 		return grid;
