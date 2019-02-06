@@ -11,59 +11,63 @@ public class GFSGrid {
 	private int gridWidth;
 	private int gridHeight;
 	private String timeStamp = null;
+	private int entries = 0;
 
 	public GFSGrid(double topLatitude, double bottomLatitude, double westLongitude, double eastLongitude) {
+		if (westLongitude < 0.0D) {
+			westLongitude += 360.0D;
+		}
+
+		if (eastLongitude < 0.0D) {
+			eastLongitude += 360.0D;
+		}
+
+		if (westLongitude > eastLongitude) {
+			eastLongitude += 360.0D;
+		}
+
+		this.gridWidth = (int)((eastLongitude - westLongitude) * 4.0D) + 1;
+		this.gridHeight = (int)((topLatitude - bottomLatitude) * 4.0D) + 1;
+		this.grid = new GFSCell[this.gridWidth][this.gridHeight];
 		this.topLatitude = topLatitude;
 		this.bottomLatitude = bottomLatitude;
 		this.westLongitude = westLongitude;
 		this.eastLongitude = eastLongitude;
-		this.gridWidth = (int)((eastLongitude - westLongitude) * 2.0D) + 1;
-		this.gridHeight = (int)((topLatitude - bottomLatitude) * 2.0D) + 1;
-		this.grid = new GFSCell[this.gridWidth][this.gridHeight];
-	}
-
-	public LatLong getGFSCellLocation(int index, String region) {
-		double longitude = 0.0D;
-		double latitude = 0.0D;
-		if(region == "WEST") {
-			longitude = (double)(index % 24) / 2.0D;
-			latitude = (double)(index / 24) / 2.0D;
-		} else if(region == "EAST") {
-			longitude = (double)(index % 5) / 2.0D;
-			latitude = (double)(index / 5) / 2.0D;
-			longitude += 12.0D;
-		}
-
-		LatLong location = new LatLong(latitude + this.bottomLatitude, longitude + this.westLongitude);
-		return location;
 	}
 
 	public void setCellWindData(double latitude, double longitude, double windSpeedU, double windSpeedV) {
 		GFSCell cell = this.getCell(latitude, longitude, true);
-		if(cell != null) {
+		if (cell != null) {
 			double windSpeed = Math.pow(windSpeedU * windSpeedU + windSpeedV * windSpeedV, 0.5D);
 			double windDirection = Math.cos(windSpeedU / windSpeed) * 180.0D / 3.141592653589793D;
 			windDirection = 360.0D - (windDirection + 90.0D);
 			cell.setWindSpeed(windSpeed);
 			cell.setWindDirection(windDirection);
 		}
+
 	}
 
 	public void setCellSolarData(double latitude, double longitude, double solarFlux) {
 		GFSCell cell = this.getCell(latitude, longitude, true);
-		if(cell != null) {
+		if (cell != null) {
 			cell.setSolarFlux(solarFlux);
 		}
+
 	}
 
 	public void setCellTemperatureData(double latitude, double longitude, double temperature, double minTemperature, double maxTemperature, double relativeHumidity) {
 		GFSCell cell = this.getCell(latitude, longitude, true);
-		if(cell != null) {
+		if (cell != null) {
 			cell.setTemperature(temperature - 273.15D);
 			cell.setTemperatureMinimum(minTemperature - 273.15D);
 			cell.setTemperatureMaximum(maxTemperature - 273.15D);
 			cell.setRelativeHumidity(relativeHumidity);
 		}
+
+	}
+
+	public int getEntries() {
+		return this.entries;
 	}
 
 	public double getTopLatitude() {
@@ -102,20 +106,27 @@ public class GFSGrid {
 		return this.getCell(latitude, longitude, false);
 	}
 
-	private GFSCell getCell(double latitude, double longitude, boolean createIfNotFound) {
-		int x = (int)((longitude - this.westLongitude) * 2.0D);
-		int y = (int)((latitude - this.bottomLatitude) * 2.0D);
-		if(x < this.grid.length - 1 && y < this.grid[x].length - 1) {
-			if(this.grid[x][y] == null) {
-				if(!createIfNotFound) {
+	public GFSCell getCell(double latitude, double longitude, boolean createIfNotFound) {
+		double latitudeOffset = latitude - this.bottomLatitude;
+		double longitudeOffset = longitude;
+		if (longitude < 180.0D) {
+			longitudeOffset = longitude + 360.0D;
+		}
+
+		longitudeOffset -= this.westLongitude;
+		int y = (int)(latitudeOffset * 4.0D);
+		int x = (int)(longitudeOffset * 4.0D);
+		if (x >= 0 && y >= 0 && x < this.grid.length - 1 && y < this.grid[x].length - 1) {
+			if (this.grid[x][y] == null) {
+				if (!createIfNotFound) {
 					return null;
 				}
 
-				System.out.println("Creating for " + latitude + "," + longitude);
 				GFSCell cell = new GFSCell();
 				cell.setLatitude(latitude);
 				cell.setLongitude(longitude);
 				this.grid[x][y] = cell;
+				++this.entries;
 			}
 
 			return this.grid[x][y];
@@ -145,7 +156,7 @@ public class GFSGrid {
 			data.append(this.topLatitude - (double)i * dLat + "\t");
 
 			for(int j = 0; j < this.grid[i].length; ++j) {
-				if(this.grid[i][j] != null) {
+				if (this.grid[i][j] != null) {
 					data.append(this.grid[i][j].getSolarFlux() + "\t");
 				} else {
 					data.append("--\t");
